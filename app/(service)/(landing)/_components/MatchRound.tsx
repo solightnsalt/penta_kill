@@ -8,25 +8,33 @@ import Image from "next/image";
 import MatchCard from "@/app/(service)/(landing)/_components/MatchCard";
 import { DaysMatch } from "@/model/match";
 import WeekDropDown from "@/app/(service)/(landing)/_components/WeekDropDown";
-import { getMatchPredictionList } from "@/app/api/api";
-import Spinner from "@/app/(service)/_components/Spinner";
 import ErrorPage from "@/app/(service)/_components/ErrorPage";
 import useModalRef from "@/app/(service)/_lib/useModalRef";
+import useAxiosAuth from "@/lib/axiosHooks/useAxiosAuth";
+import { useSelectMatchStore } from "@/lib/selectMatchStore";
+import MatchSkeleton from "@/app/(service)/(landing)/_components/MatchRoundSkeleton";
 
 export default function MatchRound() {
-    const [matchWeek, setMatchWeek] = useState<number>(0);
-    const [selectWeek, setSelectWeek] = useState<number>(matchWeek);
     const [isDropDownOpen, setIsDropDownOpen] = useState<boolean>(false);
+    const axiosAuth = useAxiosAuth();
     const triggerRef = useRef<HTMLDivElement>(null);
+    const { selectWeek, setSelectWeek } = useSelectMatchStore();
+    const [matchWeek, setMatchWeek] = useState<number | undefined>();
 
     const {
         data: match,
         isLoading,
+        isSuccess,
         isError,
     } = useQuery({
-        queryKey: ["match", "betting"],
-        queryFn: getMatchPredictionList,
-        staleTime: 0,
+        queryKey: ["match", "betting", selectWeek],
+        queryFn: async () => {
+            const week = parseInt(selectWeek, 10);
+            const response = await axiosAuth.get(
+                `/bets/recentTournament/schedulesPage?page=${selectWeek}`,
+            );
+            return response.data;
+        },
     });
 
     useModalRef({
@@ -35,28 +43,23 @@ export default function MatchRound() {
     });
 
     useEffect(() => {
-        if (match?.data) {
-            setMatchWeek(match.data.currentWeek);
+        if (isSuccess && match) {
+            const currentWeek = match.data.currentBlockNameIndex;
+            setMatchWeek(currentWeek);
+            if (selectWeek === "") {
+                setSelectWeek(currentWeek.toString());
+            }
         }
-    }, [match]);
+    }, [isSuccess, match, selectWeek, setSelectWeek]);
 
-    if (isLoading) return <Spinner />;
-
+    if (isLoading) return <MatchSkeleton />;
     if (isError) return <ErrorPage />;
-
-    const weeklySchedules = match?.data?.weeklySchedules;
-    const weeklyArray = Array.from({ length: weeklySchedules?.length || 0 });
-    const weeklyArrayFiltered = weeklySchedules?.filter(
-        (data: any, index: number) => index === selectWeek,
-    );
-
-    console.log(match);
 
     return (
         <>
             <div className="relative flex items-center justify-end pr-5">
                 <motion.div
-                    className="relative w-32 cursor-pointer rounded-[10px] border border-white p-4 py-1 text-white"
+                    className="translate relative w-32 cursor-pointer rounded-[10px] border border-white p-4 py-1 text-white duration-100 ease-in-out hover:outline hover:outline-2 hover:outline-white"
                     initial={false}
                     onClick={() => setIsDropDownOpen((prev) => !prev)}
                 >
@@ -65,7 +68,7 @@ export default function MatchRound() {
                         ref={triggerRef}
                     >
                         <div className="flex flex-grow justify-center font-bold">
-                            {selectWeek + 1}
+                            {selectWeek !== "" && parseInt(selectWeek, 10) + 1}
                             <span className="font-normal">주차</span>
                         </div>
                         <motion.div
@@ -77,21 +80,21 @@ export default function MatchRound() {
                             style={{ originY: 0.55 }}
                             className=""
                         >
-                            <Image
-                                src="/chevron-down.svg"
-                                alt="arrow"
-                                width={24}
-                                height={24}
-                            />
+                            <div className="h-6 w-6">
+                                <Image
+                                    src="/chevron-down.svg"
+                                    alt="arrow"
+                                    width={24}
+                                    height={24}
+                                />
+                            </div>
                         </motion.div>
                     </div>
                     <AnimatePresence>
                         {isDropDownOpen && (
                             <WeekDropDown
                                 matchWeek={matchWeek}
-                                selectWeek={selectWeek}
-                                weeklyArray={weeklyArray}
-                                setSelectWeek={setSelectWeek}
+                                weeklyLength={match.data.totalPages}
                                 isOpen={isDropDownOpen}
                                 isClose={setIsDropDownOpen}
                             />
@@ -100,13 +103,11 @@ export default function MatchRound() {
                 </motion.div>
             </div>
             <div className="flex flex-col gap-y-10">
-                {weeklyArrayFiltered?.map((event: any, index: number) => (
-                    <Fragment key={index}>
-                        {event.map((match: DaysMatch, index: number) => (
-                            <MatchCard key={index} matches={match} />
-                        ))}
-                    </Fragment>
-                ))}
+                {match.data.weeklySchedules.map(
+                    (match: DaysMatch, index: number) => (
+                        <MatchCard key={index} matches={match} />
+                    ),
+                )}
             </div>
         </>
     );

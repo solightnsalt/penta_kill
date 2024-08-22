@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config = {
     darkMode: ["class"],
@@ -68,15 +69,31 @@ const config = {
                     from: { height: "var(--radix-accordion-content-height)" },
                     to: { height: "0" },
                 },
+                shimmer: {
+                    "0%": { backgroundPosition: "200%" },
+                    "100%": { backgroundPosition: "-200%" },
+                },
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
                 "accordion-up": "accordion-up 0.2s ease-out",
+                shimmer: "shimmer 2s infinite linear",
             },
             backgroundImage: {
+                "gradient-custom":
+                    "linear-gradient(to right, #2c2c2c 0%, #3a3a3a 50%, #2c2c2c 100%)",
                 "diagonal-stripes":
                     "repeating-linear-gradient(45deg, #808080 0%, #808080 3%, transparent 3%, transparent 6%)",
             },
+            backgroundSize: { custom: "300% 100%" },
+            gridTemplateColumns: {
+                "13": "repeat(13, minmax(0, 1fr))",
+            },
+        },
+    },
+    variants: {
+        extend: {
+            opacity: ["group1-hover", "group2-hover"],
         },
     },
     plugins: [require("tailwindcss-animated")],

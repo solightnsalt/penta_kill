@@ -1,8 +1,9 @@
 import React from "react";
 import { IoIosContact, IoIosLogOut } from "react-icons/io";
-import { signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
+import Image from "next/image";
 
 import MenuItem from "@/app/(service)/_components/MenuItem";
 
@@ -11,8 +12,7 @@ export default function UserModal() {
     const route = useRouter();
 
     const logoutHandler = () => {
-        signOut();
-        route.push("/");
+        signOut({ callbackUrl: "/" });
     };
 
     return (
@@ -22,7 +22,7 @@ export default function UserModal() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 15 }}
                 transition={{ duration: 0.3 }}
-                className={`absolute right-[-30px] top-[55px] flex w-32 transform justify-center rounded bg-white transition duration-500 ease-in-out`}
+                className={`absolute right-[-30px] top-[55px] flex w-36 transform justify-center rounded bg-white transition duration-500 ease-in-out`}
             >
                 <div className="px-1">
                     <div className="absolute -top-6 left-0 right-0 h-6 text-black" />
@@ -31,6 +31,17 @@ export default function UserModal() {
                         {session?.user.name}
                         <span className="text-sm font-normal">님</span>
                     </h3>
+                    <div className="flex flex-row items-center justify-center">
+                        <div className="text-black">{session?.user.point}</div>
+                        <div className="w-8">
+                            <Image
+                                src="/pointbeed.png"
+                                width={30}
+                                height={30}
+                                alt="point"
+                            />
+                        </div>
+                    </div>
                     <ul className="pt-3">
                         <MenuItem icon={<IoIosContact />} onClick={() => {}}>
                             내 정보

@@ -21,10 +21,10 @@ export interface MatchDetails {
     strategy?: MatchStrategy;
     teams: MatchTeams[];
     startTime?: Date | string;
-    state?: string;
+    state: string;
     type?: string;
     teamCode: string | null;
-    status: null | "unstarted" | "inprogress" | "win" | "loss";
+    status: null | "unstarted" | "inProgress" | "win" | "loss";
     betting: boolean;
     amount: number;
 }
@@ -38,6 +38,7 @@ export interface MatchTeams {
     code: string;
     image: string;
     name: string;
+    probability: number;
     ratio: number;
     record: MatchRecord;
     result: MatchResult;
@@ -51,4 +52,10 @@ export interface MatchRecord {
 export interface MatchResult {
     gameWins: number;
     outcome: string | null;
+}
+
+export interface ImageLoaderProps {
+    src: string;
+    width: number;
+    quality?: number;
 }

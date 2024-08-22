@@ -1,28 +1,26 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
+import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import { useSelectMatchStore } from "@/lib/selectMatchStore";
 import { matchWeekVariant } from "@/app/(service)/(landing)/_components/style";
-import { animate, motion } from "framer-motion";
 
 type DropsDownProps = {
-    matchWeek: number;
-    selectWeek: number;
-    weeklyArray: number[] | unknown[];
+    matchWeek: number | undefined;
+    weeklyLength: number;
     isOpen: boolean;
     isClose: React.Dispatch<React.SetStateAction<boolean>>;
-    setSelectWeek: (value: number) => void;
 };
 
 export default function WeekDropDown({
     matchWeek,
-    selectWeek,
-    weeklyArray,
+    weeklyLength,
     isOpen,
     isClose,
-    setSelectWeek,
 }: DropsDownProps) {
+    const { selectWeek, setSelectWeek } = useSelectMatchStore();
     const selectWeekHandler = (index: number) => () => {
-        setSelectWeek(index);
+        setSelectWeek(index.toString());
         isClose(false);
     };
 
@@ -39,13 +37,13 @@ export default function WeekDropDown({
             className="absolute -left-0 top-8 z-40 flex w-32 flex-col gap-y-1 rounded-[10px] bg-white p-4"
             onClick={handleModalClick}
         >
-            {weeklyArray.map((_, index: number) => (
+            {Array.from({ length: weeklyLength }).map((_, index: number) => (
                 <motion.li
                     whileHover={{ scale: 1.1, color: "#fff" }}
                     className={cn(
                         matchWeekVariant({
                             matchWeek: matchWeek === index,
-                            selectWeek: selectWeek === index,
+                            selectWeek: parseInt(selectWeek, 10) === index,
                         }),
                     )}
                     key={index}

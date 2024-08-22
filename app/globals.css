@@ -9,6 +9,19 @@ body,
     overscroll-behavior: none;
 }
 
+@font-face {
+    font-family: "Do Hyeon";
+    src: url("/fonts/DoHyeon-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+}
+
+@layer components {
+    .skeleton {
+      @apply animate-shimmer bg-gradient-custom bg-custom;
+    }
+  }
+
 @layer base {
     :root {
         --background: 0, 0%, 4%;

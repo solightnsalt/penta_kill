@@ -1,17 +1,10 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import instance from "@/app/api/instance";
 import { NextAuthConfig } from "next-auth";
-import cookie from "cookie";
-import axios from "axios";
 
 interface User {
-    // id: string;
-    // email: string;
-    // name: string;
-    // userInfo: UserInfo;
     accessToken: string;
-    refreshToken?: string;
+    refreshToken: string;
 }
 
 export default {
@@ -26,7 +19,7 @@ export default {
             async authorize(credentials, req) {
                 try {
                     const response = await fetch(
-                        `${process.env.NEXT_PUBLIC_ENDPOINT}/users/login`,
+                        `${process.env.NEXT_PUBLIC_ENDPOINT_URL}/users/login`,
                         {
                             method: "POST",
                             headers: {
@@ -42,13 +35,15 @@ export default {
                     if (response) {
                         const user: User = {
                             accessToken: response.headers.get(
-                                "Authorization",
+                                "authorization",
+                            ) as string,
+                            refreshToken: response.headers.get(
+                                "refreshToken",
                             ) as string,
                         };
 
                         return user;
                     } else {
-                        console.error("Unexpected response format:", response);
                         throw new Error("Unexpected response format");
                     }
                 } catch (e: any) {
@@ -64,6 +59,12 @@ export default {
         GoogleProvider({
             clientId: process.env.AUTH_GOOGLE_ID,
             clientSecret: process.env.AUTH_GOOGLE_SECRET,
+            authorization: {
+                params: {
+                    prompt: "select_account",
+                    loginHint: "${HINT}",
+                },
+            },
         }),
     ],
 } satisfies NextAuthConfig;

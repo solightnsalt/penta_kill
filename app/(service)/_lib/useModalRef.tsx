@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useCallback } from "react";
 
 type ModalRefType = {
     refs: Record<string, React.RefObject<HTMLDivElement>>;
@@ -8,24 +8,24 @@ type ModalRefType = {
 };
 
 export default function useModalRef({ refs, setState }: ModalRefType) {
-    const modalOutsideClickHandler = (event: MouseEvent) => {
-        for (const key in refs) {
-            if (
-                refs[key].current &&
-                refs[key].current.contains(event.target as Node)
-            ) {
-                return;
+    const modalOutsideClickHandler = useCallback(
+        (event: MouseEvent) => {
+            for (const key in refs) {
+                if (refs[key].current?.contains(event.target as Node)) {
+                    return;
+                }
             }
-        }
-        setState(false);
-    };
+            setState(false);
+        },
+        [refs, setState],
+    );
 
     useEffect(() => {
         document.addEventListener("mousedown", modalOutsideClickHandler);
         return () => {
             document.removeEventListener("mousedown", modalOutsideClickHandler);
         };
-    }, []);
+    }, [modalOutsideClickHandler]);
 
     return { modalOutsideClickHandler };
 }

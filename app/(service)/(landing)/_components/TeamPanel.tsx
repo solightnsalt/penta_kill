@@ -5,16 +5,17 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { AnimatePresence } from "framer-motion";
 
+import { ImageLoaderProps, MatchDetails } from "@/model/match";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
+import { useMatchState } from "@/lib/matchStore";
+import { useTeamState } from "@/lib/teamStore";
 import { useBettingModalState } from "@/lib/bettingModalStore";
+import { useRefreshToken } from "@/lib/axiosHooks/useRefreshToken";
+import { Card, CardContent } from "@/components/ui/card";
 import useMatchPanelColor from "@/app/(service)/(landing)/_lib/useMatchPanelColor";
 import BettingModal from "@/app/(service)/(landing)/_components/BettingModal";
 import SessionModal from "@/app/(service)/(landing)/_components/SessionModal";
 import { panelVariants } from "@/app/(service)/(landing)/_components/style";
-import { MatchDetails } from "@/model/match";
-import { useMatchState } from "@/lib/matchStore";
-import { useTeamState } from "@/lib/teamStore";
 
 type TeamPanelProps = {
     match: MatchDetails;
@@ -29,7 +30,7 @@ export default function TeamPanel({
     matchTime,
     matchState,
 }: TeamPanelProps) {
-    const session = useSession();
+    const { data: session } = useSession();
     const { bettingIsOpen, matchId, teamCode, BettingOnOpen, BettingOnClose } =
         useBettingModalState();
     const [sessionModal, setSessionModal] = useState<boolean>(false);
@@ -45,7 +46,7 @@ export default function TeamPanel({
         isBetting,
         position,
     });
-
+    const refreshToken = useRefreshToken();
     const setTeamData = useTeamState((state) => state.setTeamData);
     const setMatchData = useMatchState((state) => state.setMatchData);
 
@@ -53,52 +54,53 @@ export default function TeamPanel({
         return null;
     }
 
-    const handleOpenModal = () => {
-        if (
-            team.code === "TBD" ||
-            (matchState === "inProgress" && !isBetting) ||
-            matchState !== "unstarted" ||
-            (matchState === "unstarted" && isBetting)
-        ) {
+    const handleOpenModal = async () => {
+        if (team.code === "TBD") {
             return;
         }
-        if (!session.data) {
+        if (!session) {
             setSessionModal(true);
         } else if (matchId === match.id && teamCode === team.code) {
-            BettingOnClose();
+            await refreshToken();
+            BettingOnOpen(match.id, team.code);
         } else {
-            setTeamData(team);
+            setTeamData({ ...team, position });
             const matchData = {
                 ...match,
+                matchState,
                 startTime: new Date(matchTime).toISOString(),
             };
             setMatchData(matchData);
+            await refreshToken();
             BettingOnOpen(match.id, team.code);
         }
     };
 
+    const teamImageLoader = ({ src, width, quality }: ImageLoaderProps) => {
+        return `${team.image}?w=${width}&q=${quality || 75}`;
+    };
+
     return (
         <>
-            <div className="w-1/2" onClick={handleOpenModal}>
+            <div className="max-h-28 w-1/2" onClick={handleOpenModal}>
                 <Card
                     className={`${cn(panelVariants({ position }))}, ${panelColor} ${
-                        matchState === "unstarted" &&
-                        team.code !== "TBD" &&
-                        !isBetting
-                            ? "cursor-pointer"
-                            : "cursor-default"
+                        team.code !== "TBD" && !isBetting
+                            ? "cursor-pointer duration-150 ease-in-out hover:bg-blue-500"
+                            : "cursor-pointer"
                     }`}
-                >
+                >   
                     <CardContent
-                        className={`flex h-20 w-full items-center justify-between ${
+                        className={`flex w-full items-center justify-between ${
                             position === 1 ? "flex-row-reverse" : ""
                         } `}
                     >
                         <div
                             className={`flex gap-5 ${position === 1 ? "flex-row-reverse" : ""}`}
                         >
-                            <div className="flex min-h-[60px] min-w-[60px] items-center justify-center">
+                            <div className="flex min-h-[62px] min-w-[62px] items-center justify-center">
                                 <Image
+                                    loader={teamImageLoader}
                                     src={team.image}
                                     width={60}
                                     height={60}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -20,7 +20,6 @@ export default function Header() {
     const route = useRouter();
     const { data: session, status } = useSession();
     const [userMenu, setUserMenu] = useState(false);
-    const loading = status === "loading";
     const userMenuRef = useRef<HTMLDivElement>(null);
 
     const rootRoutePageHandler = () => {
@@ -67,22 +66,9 @@ export default function Header() {
                         />
                     ))}
                 </div>
-                <div className="ml-10 flex flex-row items-center gap-5">
-                    {!loading && session ? (
+                <div className="ml-10 flex flex-row items-center gap-5 pl-28">
+                    {status !== "loading" && session ? (
                         <>
-                            <div className="flex flex-row items-center justify-center">
-                                <div className="text-black">
-                                    {session?.user.point}
-                                </div>
-                                <div className="w-8">
-                                    <Image
-                                        src="/pointbeed.png"
-                                        width={30}
-                                        height={30}
-                                        alt="point"
-                                    />
-                                </div>
-                            </div>
                             <motion.div
                                 className="relative"
                                 ref={userMenuRef}
@@ -101,7 +87,7 @@ export default function Header() {
                                 </AnimatePresence>
                             </motion.div>
                         </>
-                    ) : loading ? (
+                    ) : status === "loading" ? (
                         <Spinner />
                     ) : (
                         <Link

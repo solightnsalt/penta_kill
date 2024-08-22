@@ -14,7 +14,7 @@ export const gnbRootList: GnbRootListItem[] = [
     },
     {
         path: "/board",
-        route: "펜타톡",
+        route: "커뮤니티",
     },
 ];
 
